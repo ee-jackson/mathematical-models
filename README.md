@@ -1,3 +1,3 @@
-# ecological-models
+# mathematical-models
 
 Learning about mathematical modelling.
