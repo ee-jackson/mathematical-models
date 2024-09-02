@@ -61,7 +61,7 @@ get_N <- function(K, N0, r, t) {
 
 
 Let's say we know that at the initial time point $N$ is 10,
-and that $r$ is 0.1 and K is 30.
+and that $r$ is 0.1 and $K$ is 30.
 
 ```{r}
 tibble(
@@ -73,5 +73,45 @@ tibble(
   ggplot(aes(x = t, y = N)) +
   geom_point() +
   geom_hline(yintercept = 30, linetype = 2)
+```
+
+Try some other values of $r$ and $K$.
+
+```{r}
+rK_vals <- 
+  tibble(
+  r = c(1, 0.3, 0.1, 0.05),
+  K = seq(15, 30, 5)
+) %>% 
+  expand(r, K)
+```
+
+```{r}
+plot_mod <- function(r, K, N0, t) {
+  tibble(t = t) %>% 
+  mutate(
+    N = get_N(K, N0, r, t)
+    ) %>% 
+  ggplot(aes(x = t, y = N)) +
+  geom_point() +
+  geom_hline(yintercept = K, linetype = 2) +
+  ylim(0,30) +
+  ggtitle(paste("r =", r, ", K =", K))
+}
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+
+
+map2(
+  .x = rK_vals$r,
+  .y = rK_vals$K,
+  .f = plot_mod,
+  N0 = 10,
+  t = seq(0, 50, 1)
+) %>% 
+  patchwork::wrap_plots()
 ```
 

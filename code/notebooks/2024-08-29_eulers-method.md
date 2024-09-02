@@ -1,6 +1,6 @@
 # Euler’s method
 eleanorjackson
-2024-08-30
+2024-09-02
 
 Differential equations describe how one term changes with respect to
 another term. One ecology example is how a population changes over time.
@@ -42,7 +42,7 @@ get_N <- function(K, N0, r, t) {
 ```
 
 Let’s say we know that at the initial time point $N$ is 10, and that $r$
-is 0.1 and K is 30.
+is 0.1 and $K$ is 30.
 
 ``` r
 tibble(
@@ -57,3 +57,41 @@ tibble(
 ```
 
 ![](figures/2024-08-29_eulers-method/unnamed-chunk-2-1.png)
+
+Try some other values of $r$ and $K$.
+
+``` r
+rK_vals <- 
+  tibble(
+  r = c(1, 0.3, 0.1, 0.05),
+  K = seq(15, 30, 5)
+) %>% 
+  expand(r, K)
+```
+
+``` r
+plot_mod <- function(r, K, N0, t) {
+  tibble(t = t) %>% 
+  mutate(
+    N = get_N(K, N0, r, t)
+    ) %>% 
+  ggplot(aes(x = t, y = N)) +
+  geom_point() +
+  geom_hline(yintercept = K, linetype = 2) +
+  ylim(0,30) +
+  ggtitle(paste("r =", r, ", K =", K))
+}
+```
+
+``` r
+map2(
+  .x = rK_vals$r,
+  .y = rK_vals$K,
+  .f = plot_mod,
+  N0 = 10,
+  t = seq(0, 50, 1)
+) %>% 
+  patchwork::wrap_plots()
+```
+
+![](figures/2024-08-29_eulers-method/unnamed-chunk-5-1.png)
