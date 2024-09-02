@@ -19,16 +19,6 @@ $$
 \frac{dN}{dt} = rN (1- \frac{N}{K})
 $$
 
-Euler’s method is a technique to solve differential equations. Using
-that method, we can solve the equation to get this:
-
-$$
-N_{t+dt} = N_{t} + [rN_{t} (1-\frac{N_{t}}{K}) ]dt
-$$
-
-We are going to try and simulate the logistic model using Euler’s
-method.
-
 ``` r
 library("tidyverse")
 library("here")
@@ -95,3 +85,30 @@ map2(
 ```
 
 ![](figures/2024-08-29_eulers-method/unnamed-chunk-5-1.png)
+
+Euler’s method is a technique to solve differential equations. It’s
+easier than doing integrations (which is what I unwittingly coded out
+above).
+
+$$
+N_{t+dt} = N_{t} + [rN_{t} (1-\frac{N_{t}}{K}) ]dt
+$$
+
+Mike’s code for solving using Euler’s method:
+
+``` r
+N = array(0, dim = c(1000))
+
+r = 2.0
+K = 100
+dt = 0.01
+
+N[1] = 0.1
+
+for(i in 2:1000)
+  N[i]=(r*N[i-1]*(1-N[i-1]/K))*dt+N[i-1]
+
+plot(N)
+```
+
+![](figures/2024-08-29_eulers-method/unnamed-chunk-6-1.png)
