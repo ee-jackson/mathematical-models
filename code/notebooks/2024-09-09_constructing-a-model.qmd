@@ -107,9 +107,9 @@ for more than one time step - useful for plant and animals with stage-dependent 
 ```{r}
 t_mat <- matrix(     
   c(
-    0.25, 1.5, 1.5,
-    0.4, 0, 0,
-    0, 0.75, 0
+    0, 0, 10,
+    0.2, 0.5, 0,
+    0, 0.2, 0.8
   ),
   nrow = 3, ncol = 3, byrow = T,
   dimnames = (list(c("seed", "juvenile", "adult"),
@@ -119,10 +119,18 @@ t_mat <- matrix(
 t_mat
 ```
 
-Starting with 1,000 seeds
+|  | seed | juvenile | adult |
+|:---------|:-----|:------|:------|
+| **seed**     | seed remaining seed | from juvenile to seed | from adult to seed |
+| **juvenile** | from seed to juvenile | juvenile remaining juvenile |  from adult to juvenile   |
+| **adult**    | from seed to adult  | from juvenile to adult |   adult remaining adult    |
+
+
+
+Starting with 30 juvenile plants
 
 ```{r}
-abund_init <- c(1000, 0, 0)
+abund_init <- c(0, 30, 0)
 
 abund_init
 ```
