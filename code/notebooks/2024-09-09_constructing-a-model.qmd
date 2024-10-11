@@ -21,6 +21,12 @@ knitr::opts_chunk$set(
 ggplot2::theme_set(ggplot2::theme_classic(base_size = 10))
 ```
 
+```{r}
+library("tidyverse")
+library("patchwork")
+```
+
+
 ### Flow diagram of the model
 
 ```{mermaid}
@@ -73,6 +79,7 @@ e.g.
 $$
 \frac{\text{d}(n(t))}{\text{d}t} = \text{rate of increase} - \text{rate of decrease}
 $$
+
 You can also have something called a *difference equation,* which might describe the change in a variable within a time step.
 e.g.
 
@@ -93,4 +100,105 @@ http://ecovirtual.ib.usp.br/doku.php?id=en:ecovirt:roteiro:pop_str:pstr_mtr
 
 ## Transition matrix
 
-When a matrix is used to represent a stage-structured population (i.e. seed, seedling, adult), it is often called a ’Lefkovitch” (or stage-based) matrix.
+A Leslie matrix has one column for each age class.
+A Lefkovitch matrix allows individuals to remain in life-stages 
+for more than one time step - useful for plant and animals with stage-dependent demography.
+
+```{r}
+t_mat <- matrix(     
+  c(
+    0.25, 1.5, 1.5,
+    0.4, 0, 0,
+    0, 0.75, 0
+  ),
+  nrow = 3, ncol = 3, byrow = T,
+  dimnames = (list(c("seed", "juvenile", "adult"),
+                  NULL))
+)
+
+t_mat
+```
+
+Starting with 1,000 seeds
+
+```{r}
+abund_init <- c(1000, 0, 0)
+
+abund_init
+```
+
+
+
+```{r}
+yr_1 <- t_mat %*% abund_init 
+
+yr_1
+```
+
+```{r}
+n_years <- 30
+
+all_years <- matrix(0, 
+                    nrow = nrow(t_mat), 
+                    ncol = n_years + 1)
+
+all_years[,1] <- yr_1
+
+for(t in 2:(n_years + 1)){   
+  all_years[,t] <-  t_mat %*% all_years[,t-1]
+}
+
+all_years
+```
+
+```{r}
+all_years %>% 
+  as_tibble(name_repair = "unique") %>% 
+  rowid_to_column(var = "stage") %>% 
+  pivot_longer(cols = contains("V"),
+               names_to = "time") %>% 
+  mutate(stage = recode(stage, 
+                        "seeds",
+                        "juveniles",
+                        "adults"),
+         time = as.numeric(str_remove(time, pattern = "V"))) %>% 
+  ggplot(aes(x = time, y = value, 
+             colour = stage, group = stage)) +
+  geom_line()
+```
+
+The model should have a stable age structure where 
+the proportion of individuals in each age group remains constant.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 10
+
+all_years %>% 
+  as_tibble(name_repair = "unique") %>% 
+  rowid_to_column(var = "stage") %>% 
+  pivot_longer(cols = contains("V"),
+               names_to = "time") %>% 
+  mutate(stage = recode(stage, 
+                        "seeds",
+                        "juveniles",
+                        "adults"),
+         time = as.numeric(str_remove(time, pattern = "V"))) %>% 
+  ggplot(aes(x = time, y = value, fill = stage)) +
+  geom_col() +
+  
+  all_years %>% 
+  as_tibble(name_repair = "unique") %>% 
+  rowid_to_column(var = "stage") %>% 
+  pivot_longer(cols = contains("V"),
+               names_to = "time") %>% 
+  mutate(stage = recode(stage, 
+                        "seeds",
+                        "juveniles",
+                        "adults"),
+         time = as.numeric(str_remove(time, pattern = "V"))) %>% 
+  ggplot(aes(x = time, y = value, fill = stage)) +
+  geom_col(position = "fill") +
+  
+  plot_layout(guides = "collect", ncol = 1)
+```
