@@ -1,0 +1,104 @@
+---
+title: "Equalization and Stabilization"
+author: "Notes from Mike"
+date: "2025-11-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here are some notes on how to determine equalization and stabilization from both unstructured and structured models. *Equalization* is the idea that species have equivalent intrinsic rates of increase. *Stabilization* is the idea that density-dependent processes operate to return to a population to an equlibirium, prevent exponential increase/decreaase and potentially allow species to coexist.
+
+We can use the *net reproductive rate* (net change in population size from generation/time step to the next) as way to vizualize these ideas of equalization and stablization. Here's it all for the dynamics of a single species ($N$) described by logistic growth/feedbacks:
+
+\[
+\frac{dN}{dt}=rN\left[1-\frac{N}{K}\right]
+\]
+
+where $r$ is the intrinsic rate of increase and $K$ is the carrying capacity. The net growth rate for simple unstructured populations is $\frac{1}{N} \frac{dN}{dt}$ so for the logistic model:
+
+\[
+\frac{1}{N}\frac{dN}{dt}=r-\frac{rN}{K}
+\]
+
+This is a straight-line - intercept $r$ - which represents the equalization processes - and slope $\frac{r}{K}$ which represents the strength of density-dependence - the stablization processes.
+
+For a structured life-history - say with seedlings ($S$) and adults trees ($A$) - with the density-dependence acting on seedling mortality - we can write a set of coupled equations:
+
+\[
+\frac{dS}{dt}=rA(t)-log(1+aS(t))S(t)-mS(t)
+\]
+
+\[
+\frac{dA}{dt}=mS(t)-\mu A(t)
+\]
+
+where $r$ is the seedling production rate, $log(1+aS(t))$ is a function describing density dependent seedling mortality, $m$ is seedling maturation rate and $\mu$ is adult tree mortality rate.
+
+To determine net growth rate from a structured life-history, we work out the Jacobian matrix (contributions of all of life stage to changes in the dynamics of each life stage - these are partial derivatives) - say the contribution of adults to changes in seedlings is $\frac{\partial{\left[dS/dt\right]}}{\partial{A}}$.
+
+The Jacobian for the seedling-tree model is:
+
+\[
+\left(\begin{array}{cc}
+-\lambda-m-\frac{a}{1+aS} & r \\
+m & -\lambda-\mu
+\end{array}\right)
+\]
+
+where $\lambda$ are eigenvalues associated with the square matrix and, for us, the dominant eigenvalue represents the net growth rate associated with the structured life history.
+
+By taking the determinant and solving this matrix for $\lambda$ we get:
+
+\[
+\lambda= \frac{-m-\frac{a}{1+aS}-\mu}{2}\pm\sqrt{\left(m+\frac{a}{1+aS}+\mu\right)^2-4\left(\frac{a\mu}{1+aS}+m(\mu-r)\right)}
+\]
+
+We can graph the positive valuves of lambda (net growth rate) to illustrate ideas of equalization and stabilization for two different specces
+
+
+```{r}
+#set model for species 1
+
+m=0.1 # maturation rate
+a=0.1 # strength of density dependent seedling mortality
+r=5.0 # seedling recruitment rate
+mu=0.001 # adult tree mortality rate
+
+S1=seq(0,100,length=1000)
+
+trm1=-m-(a/(1+a*S1))-mu
+trm2= trm1^2
+trm3=m*(mu-r)*((a*mu)/(1+a*S1))
+
+lambda1=(trm1/2)+sqrt(trm2-4*trm3) 
+
+#----------------------------------
+
+#set model for species 1
+
+m=0.1 # maturation rate
+a=0.05 # strength of density dependent seedling mortality
+r=5.0 # seedling recruitment rate
+mu=0.001 # adult tree mortality rate
+
+S2=seq(0,100,length=1000)
+
+trm1a=-m-(a/(1+a*S2))-mu
+trm2a= trm1^2
+trm3a=m*(mu-r)*((a*mu)/(1+a*S2))
+         
+lambda2=(trm1a/2)+sqrt(trm2a-4*trm3a) 
+
+plot(seq(0,100,length=10),seq(0.05,0.12,length=10),type="n",xlab="Density of Seedlings",ylab="Net Growth Rate (lambda)",bty="l")
+
+lines(S1,lambda1,col='blue',lwd=2)
+lines(S2,lambda2,col='red',lwd=2)
+         
+```
+
+Equalization - for the red species (species 2), it has the highest expected net growth rate (intercept on the y-axis) and might be expected to win out in competition.
+
+Stabilization - both species experience similar density dependence strengths and this could promote coexistence.

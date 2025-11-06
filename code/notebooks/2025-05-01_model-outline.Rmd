@@ -1,0 +1,239 @@
+---
+title: "Structured models"
+author: "Notes from Mike"
+date: "2025-05-01"
+output: html_document
+---
+
+
+This R Markdown document explains how a structured modelling framework could/can be designed to investigate the role of shared enemies on tree coexistence (and Jansen/Connell maintenance of diversity arguments).
+
+Following the results that tree growth follows Gompertz-type growth with stage/age mortality, we can define a set of linked differential equations to mimic delayed growth dynamics:
+
+\[
+\frac{dx_0}{dt}=\lambda-\mu x_0 - x_0(t)
+\]
+
+\[
+\frac{dx_i}{dt}=x_{i-1}(t) - \mu x_{i-1}(t) - x_i(t) \quad \text{i=1,...,n}
+\]
+
+\[
+\frac{dF}{dt}=x_n(t) -\mu F(t) 
+\]
+
+The first equation describes the growth dynamics with a constant input (recruitment) ($\lambda$) and (exponentially-distributed) mortality ($\mu$) this growth dynamics is then coupled through a set of linked equations (representing stages/ages) to model the changes in growth to a final stage $\frac{dF}{dt}$.
+
+To illustrate the dynamics, the following set of code solves a system where there 2 steps (2 linked equations) to describe the Gompertz growth dynamics:
+
+```{r}
+rm(list=ls())
+
+#set the number of iterations (obs), integration step (h),  and start time (v)
+
+obs=1000
+v=0.0
+h=0.05
+
+#set the number of equations and model structure
+
+ns=2
+nvar=ns+1
+
+#define the output array
+
+x1=array(dim=c(obs,nvar))
+
+y=array(dim=(nvar))
+
+derivs=function(x,y){
+  
+  lambda=2.0
+  mu=0.05
+  
+  yx[1]=lambda-mu*y[1] - y[1]
+  
+  for(i in 1:ns){
+  yx[i+1]=y[i]-mu*y[i]-y[i+1]}
+
+  yx[nvar]=y[ns]-mu*y[nvar]
+  
+  yx
+}
+
+
+#set the initial conditions 
+
+for(i in 1:nvar)
+y[i]=0.0
+
+y[1]=0.1
+y[nvar]=0.1
+
+
+
+#arrays for the RK4 integrator (see below)
+
+yt=array(1:nvar)
+dyt=array(1:nvar)
+dym=array(1:nvar)
+yout=array(1:nvar)
+yx=array(1:nvar)
+eqn=array(1:nvar)
+
+
+#4th order runge-kutta function (the workhorse for numerical integration)
+
+rk4=function(dydx,y,t,n){
+  for(jj in	1:n)
+    yt[jj]=y[jj]+dydx[jj]*h/2
+  dyt=derivs(t+h/2,yt)
+  for(jj in 1:n)	
+    yt[jj]=y[jj]+h/2*dyt[jj]
+  dym=derivs(t+h/2,yt)
+  for(jj in 1:n)
+    yt[jj]=y[jj]+h*dym[jj]
+  dym=dyt+dym
+  dyt=derivs(t+h,yt)
+  for(jj in 1:n)
+    yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+  yout
+}
+
+#define output arrays
+
+t1=array(1:obs)
+x1=array(dim=c(obs,nvar))
+
+#iterate the model 
+
+
+for(i in 1:obs){
+  eqn=derivs(v,y)
+  y=rk4(eqn,y,v,nvar)
+  v=v+h
+  x1[i,]=y
+  t1[i]=v
+  
+}
+
+#plot some results
+
+plot(seq(0,max(t1),length=10),seq(0,max(x1[,nvar]+5),length=10),type="n",bty="l",xlab="Time",ylab="Growth")
+lines(t1,x1[,nvar],lwd=2)
+
+```
+
+The model is now iterated for three different lengths of steps describing the Gompertz growth (2,4 & 8). (Code is hidden).
+
+
+```{r,echo=FALSE}
+rm(list=ls())
+
+#set the number of iterations (obs), integration step (h),  and start time (v)
+
+obs=1000
+v=0.0
+h=0.05
+
+#set the number of equations and model structure
+res=array(0,dim=c(obs,3))
+stps=c(2,4,8)
+
+for(kjk in 1:3){
+ns=stps[kjk]
+nvar=ns+1
+
+#define the output arrays
+
+x1=array(dim=c(obs,nvar))
+
+y=array(dim=(nvar))
+
+derivs=function(x,y){
+  
+  lambda=2.0
+  mu=0.05
+  
+  yx[1]=lambda-mu*y[1] - y[1]
+  
+  for(i in 1:ns){
+  yx[i+1]=y[i]-mu*y[i]-y[i+1]}
+
+  yx[nvar]=y[ns]-mu*y[nvar]
+  
+  yx
+}
+
+
+#set the initial conditions 
+
+for(i in 1:nvar)
+y[i]=0.0
+
+y[1]=0.1
+y[nvar]=0.1
+
+
+
+#arrays for the RK4 integrator (see below)
+
+yt=array(1:nvar)
+dyt=array(1:nvar)
+dym=array(1:nvar)
+yout=array(1:nvar)
+yx=array(1:nvar)
+eqn=array(1:nvar)
+
+
+#4th order runge-kutta function (the workhorse for numerical integration)
+
+rk4=function(dydx,y,t,n){
+  for(jj in	1:n)
+    yt[jj]=y[jj]+dydx[jj]*h/2
+  dyt=derivs(t+h/2,yt)
+  for(jj in 1:n)	
+    yt[jj]=y[jj]+h/2*dyt[jj]
+  dym=derivs(t+h/2,yt)
+  for(jj in 1:n)
+    yt[jj]=y[jj]+h*dym[jj]
+  dym=dyt+dym
+  dyt=derivs(t+h,yt)
+  for(jj in 1:n)
+    yout[jj]=y[jj]+(h/6)*(dydx[jj]+dyt[jj]+2*dym[jj])
+  yout
+}
+
+#define output arrays
+
+t1=array(1:obs)
+x1=array(dim=c(obs,nvar))
+
+#iterate the model 
+
+
+for(i in 1:obs){
+  eqn=derivs(v,y)
+  y=rk4(eqn,y,v,nvar)
+  v=v+h
+  x1[i,]=y
+  t1[i]=v
+  
+}
+res[,kjk]=x1[,nvar]
+}
+
+```
+
+Plotting the results for the different lengths of steps describing the Gompertz growth (2 (black),4 (red) & 8 (orange)) for a set of fixed parameters ($\lambda=2.0$, $\mu=0.5$) captures different types of growth dynamics: 
+
+```{r, echo=FALSE}
+tt=seq(1,50,length=length(res[,1]))
+#plot some results
+
+plot(seq(0,max(tt),length=10),seq(0,max(res[,]+1),length=10),type="n",bty="l",xlab="Time",ylab="Growth")
+lines(tt,res[,1],lwd=2,col="black")
+lines(tt,res[,2],lwd=2,col="red")
+lines(tt,res[,3],lwd=2,col="orange")
+
+```
