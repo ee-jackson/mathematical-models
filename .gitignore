@@ -2,7 +2,8 @@
 
 data/
 code/notebooks/*html
-
+*.pptx
+*.docx
 
 ## R + RStudio ignores:
 
